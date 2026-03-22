@@ -16,13 +16,20 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install fastapi uvicorn httpx pytest
+        run: pip install -r requirements.txt httpx pytest
 
       - name: Start FastAPI server
         run: uvicorn main:app --port 8000 &
 
-      - name: Wait for server
-        run: sleep 3
+      - name: Wait for server to be ready
+        run: |
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:8000/health && exit 0
+            echo "Waiting... ($i/15)"
+            sleep 2
+          done
+          echo "Server did not start in time"
+          exit 1
 
       - name: Health check
         run: curl -f http://localhost:8000/health
