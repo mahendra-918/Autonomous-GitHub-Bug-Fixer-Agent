@@ -19,7 +19,10 @@ jobs:
         run: pip install -r requirements.txt httpx pytest
 
       - name: Start FastAPI server
-        run: uvicorn main:app --port 8000 &
+        env:
+          GROQ_API_KEY: dummy-key-for-health-check
+          GITHUB_TOKEN: dummy-token-for-health-check
+        run: uvicorn main:app --port 8000 > /tmp/uvicorn.log 2>&1 &
 
       - name: Wait for server to be ready
         run: |
@@ -28,7 +31,8 @@ jobs:
             echo "Waiting... ($i/15)"
             sleep 2
           done
-          echo "Server did not start in time"
+          echo "Server did not start in time. Uvicorn logs:"
+          cat /tmp/uvicorn.log
           exit 1
 
       - name: Health check
