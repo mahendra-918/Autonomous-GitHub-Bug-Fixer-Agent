@@ -11,9 +11,9 @@ CLONE_DIR = os.environ.get("REPO_CLONE_DIR", "/tmp/repos")
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def get_github_client() -> Github:
-    token = os.environ.get("GITHUB_TOKEN")
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GITHUB_PAT")
     if not token:
-        raise EnvironmentError("GITHUB_TOKEN environment variable is not set.")
+        raise ValueError("No GitHub token found in GITHUB_TOKEN or GITHUB_PAT env vars")
     global _gh
     if _gh is None:
         _gh = Github(token)
@@ -176,6 +176,13 @@ def create_fix_pr(
         head=fix_branch,
         base=default_branch,
     )
+
+    diff_summary = diff_summary[:500] if len(diff_summary) > 500 else diff_summary
+    issue.create_comment(
+        f"🤖 I found the bug and opened a fix in {pr.html_url}. "
+        f"Root cause: {diff_summary}"
+    )
+
     return pr.html_url
 
 

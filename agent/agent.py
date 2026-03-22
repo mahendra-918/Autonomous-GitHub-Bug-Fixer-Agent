@@ -182,7 +182,7 @@ def build_graph() -> StateGraph:
 # ── Public entry point ────────────────────────────────────────────────────────
 
 async def run_agent(repo_url: str, issue_number: int) -> AgentState:
-    app = build_graph()
+    graph = build_graph()
     initial: AgentState = {
         "repo_url": repo_url,
         "issue_number": issue_number,
@@ -196,4 +196,41 @@ async def run_agent(repo_url: str, issue_number: int) -> AgentState:
         "pr_url": None,
         "error": None,
     }
-    return await app.ainvoke(initial)
+    return await graph.ainvoke(initial)
+
+
+if __name__ == "__main__":
+    import sys
+
+    repo_name = os.environ.get("REPO_NAME")
+    issue_number = os.environ.get("ISSUE_NUMBER")
+
+    if not repo_name or not issue_number:
+        print("ERROR: REPO_NAME and ISSUE_NUMBER env vars are required")
+        sys.exit(1)
+
+    repo_url = f"https://github.com/{repo_name}"
+
+    print(f"Starting agent for {repo_url} issue #{issue_number}")
+
+    app = build_graph()
+    result = app.invoke({
+        "repo_url": repo_url,
+        "issue_number": int(issue_number),
+        "issue_data": None,
+        "file_tree": [],
+        "relevant_files": [],
+        "file_contents": {},
+        "analysis": None,
+        "fixed_content": None,
+        "diff": None,
+        "pr_url": None,
+        "error": None,
+    })
+
+    if result.get("pr_url"):
+        print(f"SUCCESS: PR opened at {result['pr_url']}")
+        sys.exit(0)
+    else:
+        print(f"FAILED: {result.get('error', 'Unknown error')}")
+        sys.exit(1)
