@@ -39,7 +39,10 @@ jobs:
         run: curl -f http://localhost:8000/health
 
       - name: Run tests
+        env:
+          GROQ_API_KEY: dummy-key-for-health-check
+          GITHUB_TOKEN: dummy-token-for-health-check
         run: |
           if [ -d "tests" ]; then
-            pytest tests/ -v
+            python -m pytest tests/ -v
           fi
